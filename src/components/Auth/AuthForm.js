@@ -5,8 +5,8 @@ import classes from './AuthForm.module.css';
 const AuthForm = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
-  const [loader, setLoader] = useState();
   const [isLogin, setIsLogin] = useState(true);
+  const [loader, setLoader] = useState(false);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
@@ -16,36 +16,45 @@ const AuthForm = () => {
 
     const enteredEmail = emailInputRef.current.value;
     const enteredPassword = passwordInputRef.current.value;
+    
     setLoader(true);
+    let url;
      
     if(isLogin){
+      url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyA8VYBlr-xMMUF5fuo0YSes1MSbirOBCwY'
+     } else{
+      url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyA8VYBlr-xMMUF5fuo0YSes1MSbirOBCwY'
+    }
+    fetch(url ,
+    {
+      method: 'POST',
+      body: JSON.stringify(
+        {
+          email: enteredEmail,
+          password: enteredPassword,
+          returnSecureToken: true
+        }),
+        headers: {'Content-type': 'application/json'}
+      }
+    ).then((res) => {
+      setLoader(false)
+      if(res.ok){
+        return res.json()
+      }else{
+        return res.json().then((data) => {
+          const errormsg = data.error.message;
+          throw new Error(errormsg)
+        })
+      }
+    })
+    .then((data) => {console.log(data);
 
-     }else{
-      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyA8VYBlr-xMMUF5fuo0YSes1MSbirOBCwY',
-      {
-        method: 'POST',
-        body: JSON.stringify(
-          {
-            email: enteredEmail,
-            password: enteredPassword,
-            returnSecureToken: true
-          }),
-          headers: {'Content-type': 'application/json'}
-        }
-      ).then((res) => {
-        if(res.ok){
-          setLoader(false)
-        }else{
-          return res.json().then((data) => {
-            console.log(data);
-            setLoader(false)
-            alert(data.error.message)
-          })
-        }
-      })
-     }
+    })
+    .catch((err) => {
+      alert(err.message);
+    })
   }
-
+    
   return (
     <section className={classes.auth}>
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
